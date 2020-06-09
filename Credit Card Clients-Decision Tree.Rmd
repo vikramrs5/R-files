@@ -1,0 +1,70 @@
+---
+title: "Credit Card Clients Analysis(Decision Tree)"
+output: html_notebook
+---
+
+This command is used to view the Original DataSet
+```{r}
+View(default_of_credit_card_clients)
+```
+
+The orginal dataset is being duplicated into another document before further analysis.
+```{r}
+credit_clients2=default_of_credit_card_clients
+```
+
+The Structure of the duplicated Dataset is Viewed using this function
+```{r}
+str(credit_clients2)
+```
+
+The Summary of the Dataset is derived using this function
+```{r}
+summary(credit_clients2)
+```
+
+Using caTools Library, we factorize the dependent variable(dpnm) and education,SampleSplit(sample_cc)with a Ratio(0.8),Train(train_cc)and Test(test_cc) the Dataset.
+```{r}
+library(caTools)
+credit_clients2$dpnm=factor(credit_clients2$dpnm,levels = c(0,1))
+credit_clients2$EDUCATION=factor(credit_clients2$EDUCATION,levels = c(1,2,3,4,5,6))
+sample_cc=sample.split(credit_clients2,SplitRatio = 0.8)
+sample_cc
+train_cc=subset(credit_clients2,sample_cc=="TRUE")
+train_cc
+test_cc=subset(credit_clients2,sample_cc=="FALSE")
+test_cc
+```
+
+Post the Train and Test Process of the dataset,we use (rpart) and (rpart.plot) library to derive the decision tree for the test data that is assigned.
+We use rpart.control function to control the Decision Tree limits.
+We use Printcp,Plotcp function to rectify if there were any overfit in the derived decision tree.
+```{r}
+library(rpart)
+library(rpart.plot)
+my_cc_model1=rpart.control(minsplit = 6,minbucket = round(5/3),maxdepth = 6,cp = 0)
+my_cc_model=rpart(dpnm~.,data = test_cc,method = "class",
+                  control =my_cc_model1)
+my_cc_model
+rpart.plot(my_cc_model)
+printcp(my_cc_model)
+plotcp(my_cc_model)
+```
+
+After deriving the Decision Tree,We Predict The Values of Test data.
+Then,we use table function to derive the Actual Value of the Dependent Variable(dpnm) from the dataset and the Predicted value of the using the test dataset.
+```{r}
+pred=predict(my_cc_model,test_cc,type = "class")
+pred
+t1=table(actualvalue=test_cc$dpnm,predictedvalue=pred)
+```
+
+Finally,We conclude by checking the accuracy of the Predicted Value with the Actual Value.
+Here,the Accuracy of the Predicted value =0.8388 (i.e) 83.88%
+```{r}
+accu_test=sum(diag(t1))/sum(t1)
+accu_test
+
+```
+
+

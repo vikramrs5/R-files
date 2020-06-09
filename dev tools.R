@@ -1,0 +1,5 @@
+install.packages("devtools")
+devtools::install_github("swarm-lab/videoplayR")
+library(videoplayR)
+install.packages("keras")
+library(keras)

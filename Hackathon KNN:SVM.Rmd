@@ -1,0 +1,96 @@
+---
+title: "kNN/SVM analysis using built-in IRIS Dataset"
+output: html_notebook
+---
+What is KNN?
+
+KNN algorithm is one of the simplest classification algorithm. Even with such simplicity, it can give highly competitive results. KNN algorithm can also be used for regression problems. It is commonly used for its easy of interpretation and low calculation time.
+
+When do we use KNN?
+KNN can be used for both classification and regression predictive problems. However, it is more widely used in classification problems in the industry. To evaluate any technique we generally look at 3 important aspects:
+1. Ease to interpret output
+2. Calculation time
+3. Predictive Power
+
+#Importing the data
+```{r}
+iris #importing the data
+View(iris) #viewing the dataset
+str(iris) #viewing the structure of the dataset
+dim(iris) #viewing the dimension of the datatset
+summary(iris) #summarise the data
+```
+#Normalizing the dataset using normalize formulae.
+#Creating a seperate dataframe using lapply function by removing the dependent variable from the normalized data. 
+```{r}
+data_norm=function(x){((x-min(x))/(max(x)-min(x)))}
+iris_norm=as.data.frame(lapply(iris[,-5],data_norm))
+```
+Train and Test operations.(Splitting the data normally because the splitting cannot be random for lesser no of observations)
+```{r}
+iris_train=iris_norm[1:120,]
+iris_test=iris_norm[121:150,]
+```
+#Calling the library Class for performing kNN operations.
+#predicting and finding the best k-Value using the Accuracy          Table.(Since,there are only 150 observations[sq.rt=13] and 3 types of dependent variable in the IRIS dataset,k=1,2,3,4,5,6 cannot give proper kNN analysis.)
+```{r}
+library(class)
+iris_pred=knn(iris_train,iris_test,iris[1:120,5],k=7)
+accuracy=table(iris_pred,iris[121:150,5])
+sum(diag(accuracy/sum(accuracy)))
+```
+With k=7,We get 80% accuracy.
+
+Now,We plot using qplot from the ggplot2 library.
+#From Plot1, we Can understand that Setosa(Peach) has the highest Sepal Width,but lesser Sepal length.
+#From Plot2, we can understand that Setosa(peach)has the least petal width and least petal length.
+```{r}
+library(ggplot2)
+iris$Species=as.factor(iris$Species)
+qplot(Sepal.Length,Sepal.Width,data = iris,col=Species)+ggtitle("Sepal.Length V. Sepal Width")
+qplot(Petal.Length,Petal.Width,data = iris,col=Species)+ggtitle("Petal Length V. Petal width")
+```
+What is SVM(Support Vector Machine)?
+ 
+Support Vector Machine (SVM) is a supervised machine learning algorithm which can be used for both classification or regression challenges. However, it is mostly used in classification problems. In this algorithm, we plot each data item as a point in n-dimensional space (where n is number of features you have) with the value of each feature being the value of a particular coordinate. Then, we perform classification by finding the hyper-plane that differentiate the two classes very well.
+
+Support Vectors are simply the co-ordinates of individual observation. Support Vector Machine is a frontier,which best segregates the two classes (hyper-plane/ line).
+
+
+
+##Creating a new duplicated iris dataset for performing SVM Analysis.
+```{r}
+svm_iris=iris
+```
+Splitting the dataset,training and testing.
+```{r}
+s=sample(150,120)
+iris_train1=svm_iris[s,]
+iris_train1
+iris_test1=svm_iris[-s,]
+iris_test1
+```
+The e1071 package in R is used to create Support Vector Machines with ease. It has helper functions as well as code for the Naive Bayes Classifier.
+
+##We use linear SVM Kernel and Classification SVM type,with 3 different classes.
+```{r}
+library(e1071)
+svm_my_analysis=svm(Species~.,data = iris_train1,kernel="linear")
+summary(svm_my_analysis)
+```
+##Library RGL is called for plotting 3D graphs using X-Quartz Viewer.
+```{r}
+library(rgl)
+plot3d(svm_iris$Petal.Width,svm_iris$Sepal.Width,svm_iris$Petal.Length,col=svm_iris$Species,size=10)
+```
+
+Pros and Cons associated with SVM
+Pros:
+•	It works really well with clear margin of separation
+•	It is effective in high dimensional spaces.
+•	It is effective in cases where number of dimensions is greater than the number of samples.
+•	It uses a subset of training points in the decision function (called support vectors), so it is also memory efficient.
+Cons:
+•	It doesn’t perform well, when we have large data set because the required training time is higher.
+•	It also doesn’t perform very well, when the data set has more noise i.e. target classes are overlapping.
+

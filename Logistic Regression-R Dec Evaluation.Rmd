@@ -1,0 +1,90 @@
+---
+title: "Logistic Regression-R Dec Evaluation"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+Viewing,Creating a new duplicate dataset for analysis,Viewing the Structure,Summary of the duplicated dataset.
+```{r}
+View(Titanic)
+Titaniclog1=Titanic
+str(Titaniclog1)
+summary(Titaniclog1)
+View(Titaniclog1)
+```
+
+Removing NA values,Converting Age Variable as numeric and assigning the missing age variables by using mean method.
+```{r}
+Titaniclog1=na.omit(Titaniclog1)
+Titaniclog1$Age=as.numeric(Titaniclog1$Age) 
+Titaniclog1$Age[is.na(Titaniclog1$Age)]=mean(Titaniclog1$Age,na.rm = TRUE)
+```
+
+Converting the Character Variables into Numeric Variables for performing the Logistic Analysis and Viewing the Final Structure of the converted dataset for analysis.
+```{r}
+nonvars = c("PassengerId","Name","Ticket","Embarked","Cabin")
+Titaniclog1 = Titaniclog1[,!(names(Titaniclog1) %in% nonvars)]
+str(Titaniclog1)
+```
+
+Performing Sample Split,Train,Test for Dataset.
+```{r}
+library(caTools)
+Sample_titlog1=sample.split(Titaniclog1,SplitRatio = 0.7)
+Sample_titlog1
+Train_titlog1=subset(Titaniclog1,Sample_titlog1=="TRUE")
+Train_titlog1
+Test_titlog1=subset(Titaniclog1,Sample_titlog1=="FALSE")
+Test_titlog1
+```
+Building Model By using Binomial Family(Logistic Regression Analysis)
+```{r}
+#Building Model
+Titaniclog1_eq=glm(Survived~.,Train_titlog1,family="binomial")
+summary(Titaniclog1_eq)
+
+```
+Performing Prediction and Accuracy of the Test Data.
+```{r}
+##PREDICTION and ACCURACY
+Test_titlog1_pred=predict(Titaniclog1_eq,Test_titlog1,type="response")
+Test_titlog1_pred
+
+T=table(actualvalue=Test_titlog1$Survived,predictedvalue=Test_titlog1_pred>0.62)
+sum(diag(T))/sum(T)
+```
+ROCR Prediction and Performance Graphs.
+```{r}
+#ROCR
+library(ROCR)
+ROCRPred=prediction(Test_titlog1_pred,Test_titlog1$Survived)
+ROCR_Perfor=performance(ROCRPred,"tpr","fpr")
+plot(ROCR_Perfor,colorize=TRUE)
+plot(ROCR_Perfor,colorize=TRUE,print.cutoffs.at=seq(0.1,by =0.1))
+
+```
+
+Plotting using GGPlot Concepts.
+```{r}
+##GGPLOT CONCEPTS
+library(ggplot2)
+library(ggridges)
+library(ggExtra)
+LT=dim(Train_titlog1)[1]
+#Graph 1
+Titaniclog1$Survived=as.factor(Titaniclog1$Survived)
+ggplot(Titaniclog1,aes(x=Sex,y=Survived,col=Survived))+geom_jitter()+labs(title = "SURVIVAL ANALYSIS BETWEEN MALE AND FEMALE")
+Titaniclog1$Survived=factor(Titaniclog1$Survived,levels=c(0,1))
+summary(Titaniclog1$Survived)
+#Graph 2
+# Survival as a function of Pclass:
+ggplot(data = Titaniclog1[1:LT,],aes(x=Pclass,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+#Graph 3
+# Relationship between sex and survival:
+ggplot(data=Titaniclog1[1:LT,],aes(x=Sex,fill=Survived))+geom_bar()
+#Graph 4
+# Survival as a function of age:
+ggplot(data = Titaniclog1[!(is.na(Titaniclog1[1:LT,]$Age)),],aes(x=Age,fill=Survived))+geom_histogram(binwidth =3)
+
+```
+
